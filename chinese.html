@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Character Decomposition</title>
+    <style>
+        /* Existing styles */
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding-bottom: 60px;
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+        }
+
+        button {
+            margin-bottom: 20px;
+            font-size: 16px;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        #frequencyToggle {
+            position: fixed;
+            bottom: 50px; /* Position above the other button */
+            left: 0;
+            width: 100%;
+            background-color: #4CAF50; /* Green color */
+            color: white;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: baseline;
+        }
+
+        .row {
+            display: flex;
+            justify-content: center;
+        }
+
+        .char {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 10px;
+            font-size: 24px;
+            color: #333;
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.5s ease; /* Smooth transition for color change */
+        }
+
+        /* Media queries for responsive design */
+        @media (max-width: 600px) {
+            .char {
+                font-size: 30px;
+                padding: 15px;
+            }
+
+            button {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button id="randomButton">Get Random Character</button>
+    <button id="frequencyToggle">Toggle Frequency Color</button>
+    <div id="mainContainer" class="container"></div>
+
+    <script>
+        let colorEnabled = false;
+        let charFreqData = {};
+
+        // Load both JSON files
+        Promise.all([
+            fetch('heisig_decomp.json').then(response => response.json()),
+            fetch('char_freq.json').then(response => response.json())
+        ]).then(([heisigData, charFreq]) => {
+            charFreqData = charFreq;
+
+            function displayCharacter(character, parentElement) {
+                const row = document.createElement('div');
+                row.className = 'row';
+                const charElement = document.createElement('div');
+                charElement.className = 'char';
+                charElement.textContent = character;
+                setColor(charElement, character);
+                row.appendChild(charElement);
+                parentElement.appendChild(row);
+
+                if (heisigData[character]) {
+                    const childContainer = document.createElement('div');
+                    childContainer.className = 'container';
+                    row.appendChild(childContainer);
+
+                    heisigData[character].forEach(subChar => {
+                        displayCharacter(subChar, childContainer);
+                    });
+                }
+            }
+
+            function setColor(element, character) {
+                if (colorEnabled && charFreqData[character]) {
+                    const frequency = charFreqData[character];
+                    const intensity = Math.log(frequency + 1) / Math.log(1.001); // Log scale calculation
+                    console.log(intensity);
+                    const color = 255 - Math.round(intensity * 255);
+                    element.style.backgroundColor = `rgb(${color}, 255, ${color})`;
+                } else {
+                    element.style.backgroundColor = '#fff';
+                }
+            }
+
+            document.getElementById('randomButton').addEventListener('click', () => {
+                const characters = Object.keys(heisigData);
+                const randomChar = characters[Math.floor(Math.random() * characters.length)];
+                
+                const mainContainer = document.getElementById('mainContainer');
+                mainContainer.innerHTML = '';
+                displayCharacter(randomChar, mainContainer);
+            });
+
+            document.getElementById('frequencyToggle').addEventListener('click', () => {
+                colorEnabled = !colorEnabled;
+                displayCharacter(randomChar, document.getElementById('mainContainer'));
+            });
+        });
+    </script>
+</body>
+</html
